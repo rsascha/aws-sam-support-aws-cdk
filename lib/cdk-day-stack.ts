@@ -9,138 +9,150 @@ import * as cdk from '@aws-cdk/core';
 import { CfnOutput } from '@aws-cdk/core';
 
 export class CdkDayStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+        super(scope, id, props);
 
-    // ###################################################
-    // Translation DDB table
-    // ###################################################
-    const translateTable = new Table(this, "TranslateTable", {
-      partitionKey: {name: 'id', type: AttributeType.STRING},
-      sortKey: {name: 'language', type: AttributeType.STRING}
-    })
-    
-    // ###################################################
-    // Translation EventBridge bus
-    // ###################################################
-    const translateBus = new EventBus(this, "TranslateBus", {
-      eventBusName: "TranslateBus"
-    })
+        // ###################################################
+        // Translation DDB table
+        // ###################################################
+        const translateTable = new Table(this, 'TranslateTable', {
+            partitionKey: { name: 'id', type: AttributeType.STRING },
+            sortKey: { name: 'language', type: AttributeType.STRING },
+        });
 
-    // ###################################################
-    // Put translation function
-    // ###################################################
-    const putTranslationFunction = new Function(this, "PutTranslationFunction", {
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.handler',
-      code: Code.fromAsset('src/put-translation'),
-      tracing: Tracing.ACTIVE,
-      environment: {
-        'TRANSLATE_BUS': translateBus.eventBusName
-      }
-    })
+        // ###################################################
+        // Translation EventBridge bus
+        // ###################################################
+        const translateBus = new EventBus(this, 'TranslateBus', {
+            eventBusName: 'TranslateBus',
+        });
 
-    translateBus.grantPutEventsTo(putTranslationFunction)
+        // ###################################################
+        // Put translation function
+        // ###################################################
+        const putTranslationFunction = new Function(
+            this,
+            'PutTranslationFunction',
+            {
+                runtime: Runtime.NODEJS_14_X,
+                handler: 'app.handler',
+                code: Code.fromAsset('src/put-translation'),
+                tracing: Tracing.ACTIVE,
+                environment: {
+                    TRANSLATE_BUS: translateBus.eventBusName,
+                },
+            }
+        );
 
-    const translatePolicyStatement = new PolicyStatement({
-      actions: ['translate:TranslateText'],
-      resources: ['*']
-    })
+        translateBus.grantPutEventsTo(putTranslationFunction);
 
-    putTranslationFunction.role?.attachInlinePolicy(
-      new Policy(this, "PutTranslatePolicy", {
-        statements: [translatePolicyStatement]
-      })
-    )
+        const translatePolicyStatement = new PolicyStatement({
+            actions: ['translate:TranslateText'],
+            resources: ['*'],
+        });
 
-    // ###################################################
-    // Get translations function
-    // ###################################################
-    const getTranslationFunction = new Function(this, "GetTranslationFunction", {
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.handler',
-      code: Code.fromAsset('src/get-translation'),
-      tracing: Tracing.ACTIVE,
-      environment: {
-        'TRANSLATE_TABLE': translateTable.tableName
-      }
-    })
+        putTranslationFunction.role?.attachInlinePolicy(
+            new Policy(this, 'PutTranslatePolicy', {
+                statements: [translatePolicyStatement],
+            })
+        );
 
-    translateTable.grantReadData(getTranslationFunction)
+        // ###################################################
+        // Get translations function
+        // ###################################################
+        const getTranslationFunction = new Function(
+            this,
+            'GetTranslationFunction',
+            {
+                runtime: Runtime.NODEJS_14_X,
+                handler: 'app.handler',
+                code: Code.fromAsset('src/get-translation'),
+                tracing: Tracing.ACTIVE,
+                environment: {
+                    TRANSLATE_TABLE: translateTable.tableName,
+                },
+            }
+        );
 
-    // ###################################################
-    // Save translations function
-    // ###################################################
-    const saveTranslationFunction = new Function(this, "SaveTranslationFunction", {
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.handler',
-      code: Code.fromAsset('src/save-translation'),
-      tracing: Tracing.ACTIVE,
-      environment:{
-        'TRANSLATE_TABLE': translateTable.tableName
-      }
-    })
+        translateTable.grantReadData(getTranslationFunction);
 
-    translateTable.grantWriteData(saveTranslationFunction)
+        // ###################################################
+        // Save translations function
+        // ###################################################
+        const saveTranslationFunction = new Function(
+            this,
+            'SaveTranslationFunction',
+            {
+                runtime: Runtime.NODEJS_14_X,
+                handler: 'app.handler',
+                code: Code.fromAsset('src/save-translation'),
+                tracing: Tracing.ACTIVE,
+                environment: {
+                    TRANSLATE_TABLE: translateTable.tableName,
+                },
+            }
+        );
 
-    // ###################################################
-    // EventBridge Rule
-    // ###################################################
-    new Rule(this, "SaveTranslationRule", {
-      eventBus: translateBus,
-      eventPattern: {detailType: ["translation"]},
-      targets:[new LambdaFunction(saveTranslationFunction)]
-    })
+        translateTable.grantWriteData(saveTranslationFunction);
 
-    // ###################################################
-    // API Gateway and routes
-    // ###################################################
-    const translateAPI = new HttpApi(this, "TranslateAPI")
+        // ###################################################
+        // EventBridge Rule
+        // ###################################################
+        new Rule(this, 'SaveTranslationRule', {
+            eventBus: translateBus,
+            eventPattern: { detailType: ['translation'] },
+            targets: [new LambdaFunction(saveTranslationFunction)],
+        });
 
-    translateAPI.addRoutes({
-      path: '/',
-      methods: [HttpMethod.POST],
-      integration: new LambdaProxyIntegration({
-        handler: putTranslationFunction
-      })
-    })
+        // ###################################################
+        // API Gateway and routes
+        // ###################################################
+        const translateAPI = new HttpApi(this, 'TranslateAPI');
 
-    const getProxy = new LambdaProxyIntegration({
-      handler: getTranslationFunction
-    })
+        translateAPI.addRoutes({
+            path: '/',
+            methods: [HttpMethod.POST],
+            integration: new LambdaProxyIntegration({
+                handler: putTranslationFunction,
+            }),
+        });
 
-    translateAPI.addRoutes({
-      path: '/{id}',
-      methods: [HttpMethod.GET],
-      integration: getProxy
-    })
+        const getProxy = new LambdaProxyIntegration({
+            handler: getTranslationFunction,
+        });
 
-    translateAPI.addRoutes({
-      path: '/',
-      methods: [HttpMethod.GET],
-      integration: getProxy
-    })
+        translateAPI.addRoutes({
+            path: '/{id}',
+            methods: [HttpMethod.GET],
+            integration: getProxy,
+        });
 
-    // ###################################################
-    // Outputs
-    // ###################################################
-    new CfnOutput(this, 'API url', {
-      value: translateAPI.url!
-    })
-    new CfnOutput(this, 'Put Function Name', {
-      value: putTranslationFunction.functionName
-    })
-    new CfnOutput(this, 'Save Function Name', {
-      value: saveTranslationFunction.functionName
-    })
-    new CfnOutput(this, 'Get Function Name', {
-      value: getTranslationFunction.functionName
-    })
-    new CfnOutput(this, "Translation Bus", {
-      value: translateBus.eventBusName
-    })
-    new CfnOutput(this, "Translation Table", {
-      value: translateTable.tableName
-    })
-  }
+        translateAPI.addRoutes({
+            path: '/',
+            methods: [HttpMethod.GET],
+            integration: getProxy,
+        });
+
+        // ###################################################
+        // Outputs
+        // ###################################################
+        new CfnOutput(this, 'API url', {
+            value: translateAPI.url!,
+        });
+        new CfnOutput(this, 'Put Function Name', {
+            value: putTranslationFunction.functionName,
+        });
+        new CfnOutput(this, 'Save Function Name', {
+            value: saveTranslationFunction.functionName,
+        });
+        new CfnOutput(this, 'Get Function Name', {
+            value: getTranslationFunction.functionName,
+        });
+        new CfnOutput(this, 'Translation Bus', {
+            value: translateBus.eventBusName,
+        });
+        new CfnOutput(this, 'Translation Table', {
+            value: translateTable.tableName,
+        });
+    }
 }

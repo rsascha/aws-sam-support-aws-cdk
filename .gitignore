@@ -2,9 +2,10 @@
 *.d.ts
 node_modules
 
-# CDK asset staging directory
+# AWS
 .cdk.staging
 cdk.out
 .aws-sam
 response.json
 locals.json
+cdk-outputs.json
