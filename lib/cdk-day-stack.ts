@@ -1,5 +1,9 @@
-import { HttpApi, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
-import { LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+import {
+    AddRoutesOptions,
+    HttpApi,
+    HttpMethod,
+} from '@aws-cdk/aws-apigatewayv2';
+import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
 import { AttributeType, Table } from '@aws-cdk/aws-dynamodb';
 import { EventBus, Rule } from '@aws-cdk/aws-events';
 import { LambdaFunction } from '@aws-cdk/aws-events-targets';
@@ -109,29 +113,29 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         const translateAPI = new HttpApi(this, 'TranslateAPI');
 
-        translateAPI.addRoutes({
+        const putTranslationIntegration = new HttpLambdaIntegration(
+            'PutTranslation',
+            putTranslationFunction
+        );
+
+        const putRootOptions: AddRoutesOptions = {
             path: '/',
             methods: [HttpMethod.POST],
-            integration: new LambdaProxyIntegration({
-                handler: putTranslationFunction,
-            }),
-        });
+            integration: putTranslationIntegration,
+        };
+        translateAPI.addRoutes(putRootOptions);
 
-        const getProxy = new LambdaProxyIntegration({
-            handler: getTranslationFunction,
-        });
+        const getTranslationIntegration = new HttpLambdaIntegration(
+            'GetId',
+            getTranslationFunction
+        );
 
-        translateAPI.addRoutes({
+        const getIdOptions: AddRoutesOptions = {
             path: '/{id}',
             methods: [HttpMethod.GET],
-            integration: getProxy,
-        });
-
-        translateAPI.addRoutes({
-            path: '/',
-            methods: [HttpMethod.GET],
-            integration: getProxy,
-        });
+            integration: getTranslationIntegration,
+        };
+        translateAPI.addRoutes(getIdOptions);
 
         // ###################################################
         // Outputs
