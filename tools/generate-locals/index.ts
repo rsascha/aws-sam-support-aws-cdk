@@ -1,7 +1,7 @@
-import { readFile, writeFile } from 'jsonfile';
+import { readFile, writeFile } from "jsonfile";
 
-const cdkOutputsFile = 'cdk-outputs.json';
-const localsFile = 'locals.json';
+const cdkOutputsFile = "cdk-outputs.json";
+const localsFile = "locals.json";
 
 interface CdkDayStackType {
     APIurl: string;
@@ -19,19 +19,19 @@ interface CdkOutputsType {
 readFile(cdkOutputsFile)
     .catch((error) => {
         console.info(`Input file  not found: '${cdkOutputsFile}'!`);
-        console.info('Maybe you need to execute `npm run deploy`?');
+        console.info("Maybe you need to execute `npm run deploy`?");
         console.error(error);
         process.exit(1);
     })
     .then((data: CdkOutputsType) => {
         const locals = {
-            'CdkDayStack/GetTranslationFunction': {
+            "CdkDayStack/GetTranslationFunction": {
                 TRANSLATE_TABLE: data.CdkDayStack.TranslationTable,
             },
-            'CdkDayStack/SaveTranslationFunction': {
+            "CdkDayStack/SaveTranslationFunction": {
                 TRANSLATE_TABLE: data.CdkDayStack.TranslationTable,
             },
-            'CdkDayStack/PutTranslationFunction': {
+            "CdkDayStack/PutTranslationFunction": {
                 TRANSLATE_BUS: data.CdkDayStack.TranslationBus,
             },
         };

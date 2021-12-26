@@ -2,8 +2,8 @@
  *  SPDX-License-Identifier: MIT-0
  */
 
-const { DynamoDB } = require('@aws-sdk/client-dynamodb');
-const { marshall } = require('@aws-sdk/util-dynamodb');
+const { DynamoDB } = require("@aws-sdk/client-dynamodb");
+const { marshall } = require("@aws-sdk/util-dynamodb");
 const dynamoClient = new DynamoDB();
 const TableName = process.env.TRANSLATE_TABLE;
 

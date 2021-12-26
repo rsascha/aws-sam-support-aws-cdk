@@ -2,15 +2,15 @@ import {
     AddRoutesOptions,
     HttpApi,
     HttpMethod,
-} from '@aws-cdk/aws-apigatewayv2';
-import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
-import { AttributeType, Table } from '@aws-cdk/aws-dynamodb';
-import { EventBus, Rule } from '@aws-cdk/aws-events';
-import { LambdaFunction } from '@aws-cdk/aws-events-targets';
-import { Policy, PolicyStatement } from '@aws-cdk/aws-iam';
-import { Code, Function, Runtime, Tracing } from '@aws-cdk/aws-lambda';
-import * as cdk from '@aws-cdk/core';
-import { CfnOutput } from '@aws-cdk/core';
+} from "@aws-cdk/aws-apigatewayv2";
+import { HttpLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
+import { AttributeType, Table } from "@aws-cdk/aws-dynamodb";
+import { EventBus, Rule } from "@aws-cdk/aws-events";
+import { LambdaFunction } from "@aws-cdk/aws-events-targets";
+import { Policy, PolicyStatement } from "@aws-cdk/aws-iam";
+import { Code, Function, Runtime, Tracing } from "@aws-cdk/aws-lambda";
+import * as cdk from "@aws-cdk/core";
+import { CfnOutput } from "@aws-cdk/core";
 
 export class CdkDayStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -19,16 +19,16 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         // Translation DDB table
         // ###################################################
-        const translateTable = new Table(this, 'TranslateTable', {
-            partitionKey: { name: 'id', type: AttributeType.STRING },
-            sortKey: { name: 'language', type: AttributeType.STRING },
+        const translateTable = new Table(this, "TranslateTable", {
+            partitionKey: { name: "id", type: AttributeType.STRING },
+            sortKey: { name: "language", type: AttributeType.STRING },
         });
 
         // ###################################################
         // Translation EventBridge bus
         // ###################################################
-        const translateBus = new EventBus(this, 'TranslateBus', {
-            eventBusName: 'TranslateBus',
+        const translateBus = new EventBus(this, "TranslateBus", {
+            eventBusName: "TranslateBus",
         });
 
         // ###################################################
@@ -36,11 +36,11 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         const putTranslationFunction = new Function(
             this,
-            'PutTranslationFunction',
+            "PutTranslationFunction",
             {
                 runtime: Runtime.NODEJS_14_X,
-                handler: 'app.handler',
-                code: Code.fromAsset('src/put-translation'),
+                handler: "app.handler",
+                code: Code.fromAsset("src/put-translation"),
                 tracing: Tracing.ACTIVE,
                 environment: {
                     TRANSLATE_BUS: translateBus.eventBusName,
@@ -51,12 +51,12 @@ export class CdkDayStack extends cdk.Stack {
         translateBus.grantPutEventsTo(putTranslationFunction);
 
         const translatePolicyStatement = new PolicyStatement({
-            actions: ['translate:TranslateText'],
-            resources: ['*'],
+            actions: ["translate:TranslateText"],
+            resources: ["*"],
         });
 
         putTranslationFunction.role?.attachInlinePolicy(
-            new Policy(this, 'PutTranslatePolicy', {
+            new Policy(this, "PutTranslatePolicy", {
                 statements: [translatePolicyStatement],
             })
         );
@@ -66,11 +66,11 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         const getTranslationFunction = new Function(
             this,
-            'GetTranslationFunction',
+            "GetTranslationFunction",
             {
                 runtime: Runtime.NODEJS_14_X,
-                handler: 'app.handler',
-                code: Code.fromAsset('src/get-translation'),
+                handler: "app.handler",
+                code: Code.fromAsset("src/get-translation"),
                 tracing: Tracing.ACTIVE,
                 environment: {
                     TRANSLATE_TABLE: translateTable.tableName,
@@ -85,11 +85,11 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         const saveTranslationFunction = new Function(
             this,
-            'SaveTranslationFunction',
+            "SaveTranslationFunction",
             {
                 runtime: Runtime.NODEJS_14_X,
-                handler: 'app.handler',
-                code: Code.fromAsset('src/save-translation'),
+                handler: "app.handler",
+                code: Code.fromAsset("src/save-translation"),
                 tracing: Tracing.ACTIVE,
                 environment: {
                     TRANSLATE_TABLE: translateTable.tableName,
@@ -102,36 +102,36 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         // EventBridge Rule
         // ###################################################
-        new Rule(this, 'SaveTranslationRule', {
+        new Rule(this, "SaveTranslationRule", {
             eventBus: translateBus,
-            eventPattern: { detailType: ['translation'] },
+            eventPattern: { detailType: ["translation"] },
             targets: [new LambdaFunction(saveTranslationFunction)],
         });
 
         // ###################################################
         // API Gateway and routes
         // ###################################################
-        const translateAPI = new HttpApi(this, 'TranslateAPI');
+        const translateAPI = new HttpApi(this, "TranslateAPI");
 
         const putTranslationIntegration = new HttpLambdaIntegration(
-            'PutTranslation',
+            "PutTranslation",
             putTranslationFunction
         );
 
         const putRootOptions: AddRoutesOptions = {
-            path: '/',
+            path: "/",
             methods: [HttpMethod.POST],
             integration: putTranslationIntegration,
         };
         translateAPI.addRoutes(putRootOptions);
 
         const getTranslationIntegration = new HttpLambdaIntegration(
-            'GetId',
+            "GetId",
             getTranslationFunction
         );
 
         const getIdOptions: AddRoutesOptions = {
-            path: '/{id}',
+            path: "/{id}",
             methods: [HttpMethod.GET],
             integration: getTranslationIntegration,
         };
@@ -140,22 +140,22 @@ export class CdkDayStack extends cdk.Stack {
         // ###################################################
         // Outputs
         // ###################################################
-        new CfnOutput(this, 'API url', {
+        new CfnOutput(this, "API url", {
             value: translateAPI.url!,
         });
-        new CfnOutput(this, 'Put Function Name', {
+        new CfnOutput(this, "Put Function Name", {
             value: putTranslationFunction.functionName,
         });
-        new CfnOutput(this, 'Save Function Name', {
+        new CfnOutput(this, "Save Function Name", {
             value: saveTranslationFunction.functionName,
         });
-        new CfnOutput(this, 'Get Function Name', {
+        new CfnOutput(this, "Get Function Name", {
             value: getTranslationFunction.functionName,
         });
-        new CfnOutput(this, 'Translation Bus', {
+        new CfnOutput(this, "Translation Bus", {
             value: translateBus.eventBusName,
         });
-        new CfnOutput(this, 'Translation Table', {
+        new CfnOutput(this, "Translation Table", {
             value: translateTable.tableName,
         });
     }

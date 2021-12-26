@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
-import { CdkDayStack } from '../lib/cdk-day-stack';
+import "source-map-support/register";
+import * as cdk from "@aws-cdk/core";
+import { CdkDayStack } from "../lib/cdk-day-stack";
 
 const app = new cdk.App();
-new CdkDayStack(app, 'CdkDayStack', {
+new CdkDayStack(app, "CdkDayStack", {
     /* If you don't specify 'env', this stack will be environment-agnostic.
      * Account/Region-dependent features and context lookups will not work,
      * but a single synthesized template can be deployed anywhere. */

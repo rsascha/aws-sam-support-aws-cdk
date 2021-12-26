@@ -2,8 +2,8 @@
  *  SPDX-License-Identifier: MIT-0
  */
 
-const { DynamoDB } = require('@aws-sdk/client-dynamodb');
-const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
+const { DynamoDB } = require("@aws-sdk/client-dynamodb");
+const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const dynamoClient = new DynamoDB();
 const TableName = process.env.TRANSLATE_TABLE;
 
@@ -11,9 +11,9 @@ exports.getOne = async function (id) {
     let dynamoParams = {
         TableName,
         ExpressionAttributeValues: marshall({
-            ':i': id,
+            ":i": id,
         }),
-        KeyConditionExpression: 'id = :i',
+        KeyConditionExpression: "id = :i",
     };
     return dynamoClient.query(dynamoParams);
 };
@@ -22,12 +22,12 @@ exports.getAll = async function () {
     let dynamoParams = {
         TableName,
         ExpressionAttributeNames: {
-            '#l': 'language',
+            "#l": "language",
         },
         ExpressionAttributeValues: marshall({
-            ':l': 'en',
+            ":l": "en",
         }),
-        FilterExpression: '#l = :l',
+        FilterExpression: "#l = :l",
     };
     return dynamoClient.scan(dynamoParams);
 };

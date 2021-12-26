@@ -5,11 +5,11 @@
 const {
     TranslateClient,
     TranslateTextCommand,
-} = require('@aws-sdk/client-translate');
+} = require("@aws-sdk/client-translate");
 const {
     EventBridgeClient,
     PutEventsCommand,
-} = require('@aws-sdk/client-eventbridge');
+} = require("@aws-sdk/client-eventbridge");
 const translateClient = new TranslateClient();
 const eventBridgeClient = new EventBridgeClient();
 const translateCommand = new TranslateTextCommand();
@@ -17,7 +17,7 @@ const eventBridgeCommand = new PutEventsCommand();
 
 exports.buildTranslationRequest = function (language, text) {
     let translateParams = {
-        SourceLanguageCode: 'en',
+        SourceLanguageCode: "en",
         TargetLanguageCode: language,
         Text: text,
     };
@@ -27,12 +27,12 @@ exports.buildTranslationRequest = function (language, text) {
 
 exports.buildEventBridgePackage = function (translations, id) {
     let entries = translations.map((item) => {
-        item['id'] = id;
+        item["id"] = id;
         return {
             Detail: JSON.stringify(item),
-            DetailType: 'translation',
+            DetailType: "translation",
             EventBusName: process.env.TRANSLATE_BUS,
-            Source: 'website',
+            Source: "website",
         };
     });
     return {
@@ -58,7 +58,7 @@ exports.handler = async function (event) {
                 translation: item.TranslatedText,
             };
         });
-        data.push({ language: 'en', translation: translateText });
+        data.push({ language: "en", translation: translateText });
 
         // send events to eventbridge
         eventBridgeCommand.input = exports.buildEventBridgePackage(
