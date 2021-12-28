@@ -11,7 +11,7 @@
     "help:aws": "aws help",
     "init": "cdk bootstrap",
     "build": "sam-beta-cdk build",
-    "postbuild": "echo \"Better just 'run npm deploy', because locals.json will be created automatically.\"",
+    "postbuild": "echo \"You can run simply 'run npm deploy', because locals.json will be created automatically. Or 'npm start' for local testing.\"",
     "deploy": "cdk deploy --app .aws-sam/build --outputs-file cdk-outputs.json",
     "postdeploy": "ts-node tools/generate-locals && prettier --write locals.json",
     "start": "sam-beta-cdk local start-api -n locals.json --warm-containers EAGER",

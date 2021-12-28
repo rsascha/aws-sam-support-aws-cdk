@@ -1,10 +1,13 @@
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { Axios, AxiosResponse } from "axios";
 
-const npmStartProcess = exec("npm run start");
+const npmStartProcess = spawn("npm", ["start"], {
+  stdio: [process.stdin, process.stdout, process.stderr],
+});
 
 npmStartProcess.on("spawn", () => {
-  performTestRequests();
+  console.log("spawn");
+  setTimeout(performTestRequests, 10000);
 });
 
 const axios = new Axios({
@@ -26,9 +29,9 @@ function performTestRequests() {
         }
         console.log(`Status: ${response.status} ${response.statusText}`);
         console.log(JSON.parse(response.data));
-        console.log(
-          "--------------------------------------------------------------------------------"
-        );
+        if (response.status != 200) {
+          throw new Error("HTTP status code is not 200. Something went wrong!");
+        }
       });
       npmStartProcess.kill();
       process.exit(0);
